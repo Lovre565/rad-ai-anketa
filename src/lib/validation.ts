@@ -2,7 +2,7 @@ import { financialAttitudes, financialBehavior, financialKnowledge, tasks } from
 import type { FinancialLiteracyAnswer, SubmissionPayload, TaskAnswer } from "./types";
 
 const MAX_STUDY_GROUP_LENGTH = 80;
-const MIN_TEXT_LENGTH = 50;
+const MIN_TEXT_LENGTH = 10;
 const MAX_TEXT_LENGTH = 1500;
 const MAX_ELAPSED_SECONDS = 60 * 60 * 3;
 
@@ -17,9 +17,7 @@ export function validateSubmissionPayload(payload: SubmissionPayload): void {
 function validateDemographics(demographics: SubmissionPayload["demographics"]) {
   if (!demographics || typeof demographics !== "object") throw new Error("Nedostaju demografski podaci.");
   validateShortText(demographics.studyGroup, "Studij/skupina", MAX_STUDY_GROUP_LENGTH);
-  if (!["18_21", "22_25", "26_30", "31_plus"].includes(demographics.ageGroup)) {
-    throw new Error("Neispravna dobna skupina.");
-  }
+  validateAge(demographics.ageGroup);
   if (!["zenski", "muski", "ne_zelim_odgovoriti"].includes(demographics.gender)) {
     throw new Error("Neispravan spol.");
   }
@@ -103,4 +101,11 @@ function validateShortText(value: unknown, label: string, maxLength: number, min
   const trimmed = value.trim();
   if (trimmed.length < minLength) throw new Error(`${label} je prekratak.`);
   if (trimmed.length > maxLength) throw new Error(`${label} je predug.`);
+}
+
+function validateAge(value: unknown) {
+  if (typeof value !== "string") throw new Error("Dob nije tekst.");
+  if (!/^\d{1,3}$/.test(value.trim())) throw new Error("Neispravna dob.");
+  const age = Number(value);
+  if (!Number.isInteger(age) || age < 16 || age > 100) throw new Error("Neispravna dob.");
 }

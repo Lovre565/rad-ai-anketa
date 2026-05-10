@@ -98,7 +98,7 @@ export const financialBehavior = [
   { id: "b4", text: "Uspoređujem ponude prije kupnje" },
   { id: "b5", text: "Aktivno štedim" },
   { id: "b6", text: "Nemam problema s dugovima" },
-  { id: "b7", text: "Planiram dugoročno (mirovina itd.)" },
+  { id: "b7", text: "Planiram dugoročno (npr. mirovina, štednja za stan i drugi dugoročni ciljevi)" },
   { id: "b8", text: "Imam financijsku rezervu" },
   { id: "b9", text: "Razmislim prije impulzivne kupnje" }
 ];
@@ -187,7 +187,7 @@ export const tasks = [
     title: "Zadatak 3 - AI alat dopušten",
     instruction: "Možete koristiti AI alat (npr. ChatGPT) kako biste dobili preporuku i dodatne informacije.",
     scenario:
-      "Petra ima 30 godina i svaki mjesec od plaće izdvaja 100 EUR koje želi dugoročno ulagati kao dodatnu štednju za mirovinu. Planira ulagati najmanje 30 godina. Novac joj nije potreban kratkoročno i spremna je prihvatiti umjerene oscilacije ako to dugoročno može povećati očekivani prinos.",
+      "Petra ima 30 godina i svaki mjesec od plaće izdvaja 100 EUR koje želi dugoročno ulagati za važne životne ciljeve, primjerice dodatnu štednju za mirovinu ili buduću štednju za stan. Planira ulagati najmanje 30 godina. Novac joj nije potreban kratkoročno i spremna je prihvatiti umjerene oscilacije ako to dugoročno može povećati očekivani prinos.",
     question: "Ako morate odabrati samo jednu od ponuđenih opcija, koja je za Petru najprimjerenija?",
     phases: ["single"] as const,
     options: [
@@ -213,7 +213,7 @@ export const tasks = [
   {
     id: "task4",
     title: "Zadatak 4 - prije i nakon AI pomoći",
-    instruction: "Prvo odgovorite samostalno. Nakon toga možete koristiti AI alat i ponovno odabrati opciju.",
+    instruction: "Prvo odgovorite samostalno. Na sljedećem ekranu možete koristiti AI alat i ponovno odabrati opciju.",
     scenario:
       "Osoba ima ušteđeno 85.000 EUR koje želi investirati. Cilj joj je kupiti stan u sljedećih pet godina, današnje vrijednosti 300.000 EUR. Očekuje se rast cijena stanova oko 3% godišnje. Osoba ima 45 godina i može mjesečno izdvajati najviše 1200 EUR za dodatnu štednju ili otplatu kredita.",
     question: "Ako morate odabrati samo jednu od ponuđenih opcija, koja Vam se čini najprimjerenijom?",

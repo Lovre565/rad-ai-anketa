@@ -12,7 +12,7 @@ import {
 import { scoreFinancialLiteracy, scoreTask } from "@/lib/scoring";
 import type { FinancialLiteracyAnswer, SubmissionPayload, TaskAnswer } from "@/lib/types";
 
-type Step = "intro" | "literacy" | "task" | "done";
+type Step = "intro" | "literacy" | "task" | "followup" | "done";
 
 const blankLiteracy: FinancialLiteracyAnswer = {
   knowledge: {},
@@ -40,9 +40,9 @@ export default function HomePage() {
 
   const currentTask = tasks[taskIndex];
   const currentPhase = currentTask?.phases[phaseIndex] ?? "single";
-  const totalSteps = 1 + tasks.reduce((sum, task) => sum + task.phases.length, 0) + 1;
+  const totalSteps = 2 + tasks.reduce((sum, task) => sum + task.phases.length + 1, 0);
   const completedTaskPhases = tasksAnswers.length;
-  const currentStepNumber = step === "intro" ? 1 : step === "literacy" ? 2 : 3 + completedTaskPhases;
+  const currentStepNumber = step === "intro" ? 1 : step === "literacy" ? 2 : 3 + completedTaskPhases + (step === "followup" ? 1 : 0);
   const progress = Math.min(100, Math.round((currentStepNumber / totalSteps) * 100));
   const elapsedSeconds = startedAt ? Math.max(0, Math.round((tick - startedAt) / 1000)) : 0;
 
@@ -60,7 +60,7 @@ export default function HomePage() {
   const literacyScore = useMemo(() => scoreFinancialLiteracy(literacy), [literacy]);
 
   function canContinueIntro() {
-    return Boolean(consent && demographics.studyGroup.trim() && demographics.ageGroup && demographics.gender);
+    return Boolean(consent && demographics.studyGroup.trim() && isValidAge(demographics.ageGroup) && demographics.gender);
   }
 
   function canContinueLiteracy() {
@@ -72,21 +72,23 @@ export default function HomePage() {
   }
 
   function canSubmitTask() {
-    const followups = getFollowupsForPhase(currentTask, currentPhase);
     return (
       currentTaskForm.selectedOption &&
-      isValidTextLength(currentTaskForm.explanation) &&
-      followups.every((question) => {
-        const value = currentTaskForm.followup[question.id];
-        if (question.type === "text") return isValidTextLength(String(value ?? ""));
-        return value !== undefined && value !== "";
-      })
+      isValidTextLength(currentTaskForm.explanation)
     );
   }
 
-  async function submitTaskPhase() {
+  function canSubmitFollowup() {
+    return getFollowupsForTask(currentTask).every((question) => {
+        const value = currentTaskForm.followup[question.id];
+        if (question.type === "text") return isValidTextLength(String(value ?? ""));
+        return value !== undefined && value !== "";
+      });
+  }
+
+  function submitTaskPhase() {
     if (!canSubmitTask()) {
-      setError("Odaberite opciju, napišite obrazloženje od 50 do 1500 znakova i odgovorite na sva dodatna pitanja.");
+      setError("Odaberite opciju i napišite obrazloženje od 10 do 1500 znakova.");
       return;
     }
 
@@ -96,7 +98,7 @@ export default function HomePage() {
       selectedOption: currentTaskForm.selectedOption,
       explanation: currentTaskForm.explanation.trim(),
       elapsedSeconds,
-      followup: currentTaskForm.followup,
+      followup: {},
       score: scoreTask(currentTask.id, currentTaskForm.selectedOption, currentTaskForm.explanation)
     };
 
@@ -109,9 +111,24 @@ export default function HomePage() {
       return;
     }
 
+    setStep("followup");
+    setCurrentTaskForm({ selectedOption: "", explanation: "", followup: {} });
+  }
+
+  async function submitFollowup() {
+    if (!canSubmitFollowup()) {
+      setError("Odgovorite na sva dodatna pitanja. Otvoreni odgovori moraju imati od 10 do 1500 znakova.");
+      return;
+    }
+
+    const nextAnswers = attachFollowups(tasksAnswers, currentTask.id, currentTaskForm.followup);
+    setTasksAnswers(nextAnswers);
+    setError("");
+
     if (taskIndex + 1 < tasks.length) {
       setTaskIndex(taskIndex + 1);
       setPhaseIndex(0);
+      setStep("task");
       return;
     }
 
@@ -120,7 +137,7 @@ export default function HomePage() {
 
   function continueIntro() {
     if (!canContinueIntro()) {
-      setError("Upišite studij, odaberite dobnu skupinu i spol te označite pristanak.");
+      setError("Upišite studij, dob u godinama i spol te označite pristanak.");
       return;
     }
     setError("");
@@ -174,7 +191,7 @@ export default function HomePage() {
         <div className="topbar">
           <div className="brand">
             <span className="eyebrow">Istraživanje</span>
-            <h1>Eksperiment financijskog odlučivanja</h1>
+            <h1>Mijenja li umjetna inteligencija način na koji potrošači donose financijske odluke na financijskim tržištima?</h1>
           </div>
           <a className="button secondary" href="/admin">Admin</a>
         </div>
@@ -210,8 +227,18 @@ export default function HomePage() {
               setForm={setCurrentTaskForm}
               elapsedSeconds={elapsedSeconds}
               submitting={submitting}
-              isLast={taskIndex === tasks.length - 1 && phaseIndex === currentTask.phases.length - 1}
               onSubmit={submitTaskPhase}
+            />
+          )}
+
+          {step === "followup" && currentTask && (
+            <FollowupStep
+              task={currentTask}
+              form={currentTaskForm}
+              setForm={setCurrentTaskForm}
+              submitting={submitting}
+              isLast={taskIndex === tasks.length - 1}
+              onSubmit={submitFollowup}
             />
           )}
 
@@ -262,18 +289,16 @@ function IntroStep({
           />
         </label>
         <label className="field">
-          <span className="label">Dobna skupina</span>
-          <select
-            className="select"
+          <span className="label">Dob u godinama</span>
+          <input
+            className="input"
+            type="number"
+            min={16}
+            max={100}
             value={demographics.ageGroup}
             onChange={(event) => setDemographics({ ...demographics, ageGroup: event.target.value })}
-          >
-            <option value="">Odaberite</option>
-            <option value="18_21">18-21</option>
-            <option value="22_25">22-25</option>
-            <option value="26_30">26-30</option>
-            <option value="31_plus">31+</option>
-          </select>
+            placeholder="Npr. 23"
+          />
         </label>
         <label className="field">
           <span className="label">Spol</span>
@@ -314,7 +339,6 @@ function LiteracyStep({
     <section className="section">
       <div>
         <h2>Test financijske pismenosti</h2>
-        <p className="muted">Odgovorite na sva pitanja. Bodovanje se računa automatski.</p>
       </div>
       <h3>Financijsko znanje</h3>
       {financialKnowledge.map((question) => (
@@ -371,7 +395,6 @@ function TaskStep({
   setForm,
   elapsedSeconds,
   submitting,
-  isLast,
   onSubmit
 }: {
   task: (typeof tasks)[number];
@@ -380,12 +403,16 @@ function TaskStep({
   setForm: (value: { selectedOption: string; explanation: string; followup: Record<string, string | number> }) => void;
   elapsedSeconds: number;
   submitting: boolean;
-  isLast: boolean;
   onSubmit: () => void;
 }) {
   const phaseLabel =
     phase === "before_ai" ? "Prvi odgovor bez AI-a" : phase === "after_ai" ? "Drugi odgovor uz AI" : "Odgovor";
-  const followups = getFollowupsForPhase(task, phase);
+  const instruction =
+    task.id === "task4" && phase === "before_ai"
+      ? "Ovaj odgovor riješite samostalno, bez korištenja AI alata."
+      : task.id === "task4" && phase === "after_ai"
+        ? "Sada možete koristiti AI alat i ponovno odabrati opciju."
+        : task.instruction;
 
   return (
     <section className="section">
@@ -396,7 +423,7 @@ function TaskStep({
         </div>
         <span className="timer"><Clock size={18} /> {elapsedSeconds}s</span>
       </div>
-      <div className="callout">{task.instruction}</div>
+      <div className="callout">{instruction}</div>
       <p>{task.scenario}</p>
       <QuestionChoices
         title={task.question}
@@ -415,7 +442,40 @@ function TaskStep({
         />
         <CharacterCounter value={form.explanation} />
       </label>
-      {followups.length > 0 && <h3>Dodatna pitanja</h3>}
+      <div className="actions">
+        <span className="muted">Timer mjeri samo vrijeme odabira opcije i pisanja obrazloženja.</span>
+        <button className="button" disabled={submitting} onClick={onSubmit}>
+          <Send size={18} /> Spremi i nastavi
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function FollowupStep({
+  task,
+  form,
+  setForm,
+  submitting,
+  isLast,
+  onSubmit
+}: {
+  task: (typeof tasks)[number];
+  form: { selectedOption: string; explanation: string; followup: Record<string, string | number> };
+  setForm: (value: { selectedOption: string; explanation: string; followup: Record<string, string | number> }) => void;
+  submitting: boolean;
+  isLast: boolean;
+  onSubmit: () => void;
+}) {
+  const followups = getFollowupsForTask(task);
+
+  return (
+    <section className="section">
+      <div>
+        <span className="eyebrow">Dodatna pitanja</span>
+        <h2>{task.title}</h2>
+        <p className="muted">Ovaj dio nije uključen u mjerenje vremena rješavanja zadatka.</p>
+      </div>
       {followups.map((question) => {
         if (question.type === "scale") {
           return (
@@ -454,35 +514,56 @@ function TaskStep({
         );
       })}
       <div className="actions">
-        <span className="muted">Timer se sprema nakon predaje ovog ekrana.</span>
         <button className="button" disabled={submitting} onClick={onSubmit}>
-          <Send size={18} /> {isLast ? "Predaj anketu" : "Spremi i nastavi"}
+          <Send size={18} /> {isLast ? "Završi eksperiment" : "Spremi i nastavi"}
         </button>
       </div>
     </section>
   );
 }
 
-function getFollowupsForPhase(task: (typeof tasks)[number], phase: "single" | "before_ai" | "after_ai") {
-  if (task.id !== "task4") return task.followups;
-  if (phase === "before_ai") {
-    return task.followups.filter((question) => question.id === "missing_before_ai");
+function getFollowupsForTask(task: (typeof tasks)[number]) {
+  return task.followups;
+}
+
+function attachFollowups(
+  answers: TaskAnswer[],
+  taskId: string,
+  followup: Record<string, string | number>
+) {
+  if (taskId !== "task4") {
+    return answers.map((answer) => (answer.taskId === taskId ? { ...answer, followup } : answer));
   }
-  return task.followups.filter((question) => question.id !== "missing_before_ai");
+
+  const beforeFollowup = { missing_before_ai: followup.missing_before_ai };
+  const afterFollowup = Object.fromEntries(
+    Object.entries(followup).filter(([key]) => key !== "missing_before_ai")
+  ) as Record<string, string | number>;
+
+  return answers.map((answer) => {
+    if (answer.taskId !== "task4") return answer;
+    if (answer.phase === "before_ai") return { ...answer, followup: beforeFollowup };
+    return { ...answer, followup: afterFollowup };
+  });
 }
 
 function isValidTextLength(value: string) {
   const length = value.trim().length;
-  return length >= 50 && length <= 1500;
+  return length >= 10 && length <= 1500;
+}
+
+function isValidAge(value: string) {
+  const age = Number(value);
+  return /^\d{1,3}$/.test(value.trim()) && Number.isInteger(age) && age >= 16 && age <= 100;
 }
 
 function CharacterCounter({ value }: { value: string }) {
   const length = value.trim().length;
   const remaining = Math.max(0, 1500 - value.length);
-  const isTooShort = length > 0 && length < 50;
+  const isTooShort = length > 0 && length < 10;
   return (
     <span className={isTooShort ? "hint error-text" : "hint"}>
-      {length}/1500 znakova. Minimalno 50, preostalo {remaining}.
+      {length}/1500 znakova. Minimalno 10, preostalo {remaining}.
     </span>
   );
 }
