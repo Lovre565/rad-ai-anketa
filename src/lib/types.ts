@@ -23,7 +23,6 @@ export type TaskAnswer = {
   explanation: string;
   elapsedSeconds: number;
   answeredAt: string;
-  followupAnsweredAt?: string;
   followup: Record<string, string | number>;
   score: number;
 };

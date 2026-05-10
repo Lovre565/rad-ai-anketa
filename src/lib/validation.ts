@@ -61,7 +61,6 @@ function validateTasks(taskAnswers: TaskAnswer[]) {
       throw new Error("Neispravno vrijeme rješavanja.");
     }
     validateIsoDate(answer.answeredAt, "Vrijeme odgovora");
-    if (answer.followupAnsweredAt !== undefined) validateIsoDate(answer.followupAnsweredAt, "Vrijeme dodatnih pitanja");
 
     const key = `${answer.taskId}:${answer.phase}`;
     if (seen.has(key)) throw new Error("Duplicirani odgovor zadatka.");
