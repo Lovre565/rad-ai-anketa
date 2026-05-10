@@ -62,13 +62,31 @@ export async function POST(request: Request) {
     });
 
     const followupRows = payload.tasks.flatMap((task) =>
-      Object.entries(task.followup).map(([questionId, value]) => ({
+      [
+        {
+          submission_id: submissionId,
+          task_id: task.taskId,
+          phase: task.phase,
+          question_id: "__task_answered_at",
+          answer_value: task.answeredAt
+        },
+        ...(task.followupAnsweredAt
+          ? [{
+              submission_id: submissionId,
+              task_id: task.taskId,
+              phase: task.phase,
+              question_id: "__followup_answered_at",
+              answer_value: task.followupAnsweredAt
+            }]
+          : []),
+        ...Object.entries(task.followup).map(([questionId, value]) => ({
         submission_id: submissionId,
         task_id: task.taskId,
         phase: task.phase,
         question_id: questionId,
         answer_value: String(value)
-      }))
+        }))
+      ]
     );
 
     if (followupRows.length > 0) {

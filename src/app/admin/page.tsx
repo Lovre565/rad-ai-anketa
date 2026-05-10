@@ -5,15 +5,30 @@ import { Download, RefreshCw } from "lucide-react";
 
 type Summary = {
   submissionCount: number;
+  taskAnswerCount: number;
   averageFinancialLiteracyScore: number;
-  byStudyGroup: Record<string, { count: number; averageFinancialLiteracy: number }>;
+  averageTaskScore: number;
+  averageTaskTimeSeconds: number;
+  byStudyGroup: Record<string, { count: number; averageFinancialLiteracy: number; averageTaskScore: number; averageTaskTimeSeconds: number }>;
   byTask: Array<{
     taskId: string;
     count: number;
     averageTimeSeconds: number;
+    medianTimeSeconds: number;
+    minTimeSeconds: number;
+    maxTimeSeconds: number;
     averageScore: number;
     distribution: Record<string, number>;
+    phases: Array<{
+      phase: string;
+      count: number;
+      averageTimeSeconds: number;
+      medianTimeSeconds: number;
+      averageScore: number;
+      distribution: Record<string, number>;
+    }>;
   }>;
+  scaleAverages: Record<string, { count: number; average: number }>;
   recentSubmissions: Array<{
     id: string;
     created_at: string;
@@ -118,6 +133,18 @@ export default function AdminPage() {
                   <strong>Prosjek financijske pismenosti</strong>
                   <p>{summary.averageFinancialLiteracyScore} / 21</p>
                 </div>
+                <div className="callout">
+                  <strong>Broj odgovora na zadatke</strong>
+                  <p>{summary.taskAnswerCount}</p>
+                </div>
+                <div className="callout">
+                  <strong>Prosjek vremena zadatka</strong>
+                  <p>{formatSeconds(summary.averageTaskTimeSeconds)}</p>
+                </div>
+                <div className="callout">
+                  <strong>Prosjek bodova zadataka</strong>
+                  <p>{summary.averageTaskScore} / 5</p>
+                </div>
               </div>
 
               <div>
@@ -129,6 +156,8 @@ export default function AdminPage() {
                         <th>Zadatak</th>
                         <th>Broj odgovora</th>
                         <th>Prosječno vrijeme</th>
+                        <th>Medijan</th>
+                        <th>Min / max</th>
                         <th>Prosječni bodovi</th>
                         <th>Distribucija opcija</th>
                       </tr>
@@ -138,11 +167,47 @@ export default function AdminPage() {
                         <tr key={task.taskId}>
                           <td>{task.taskId}</td>
                           <td>{task.count}</td>
-                          <td>{task.averageTimeSeconds}s</td>
+                          <td>{formatSeconds(task.averageTimeSeconds)}</td>
+                          <td>{formatSeconds(task.medianTimeSeconds)}</td>
+                          <td>{formatSeconds(task.minTimeSeconds)} / {formatSeconds(task.maxTimeSeconds)}</td>
                           <td>{task.averageScore} / 5</td>
                           <td>{formatDistribution(task.distribution)}</td>
                         </tr>
                       ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div>
+                <h2>Po fazama zadataka</h2>
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Zadatak</th>
+                        <th>Faza</th>
+                        <th>Broj</th>
+                        <th>Prosječno vrijeme</th>
+                        <th>Medijan vremena</th>
+                        <th>Prosječni bodovi</th>
+                        <th>Opcije</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {summary.byTask.flatMap((task) =>
+                        task.phases.map((phase) => (
+                          <tr key={`${task.taskId}-${phase.phase}`}>
+                            <td>{task.taskId}</td>
+                            <td>{formatPhase(phase.phase)}</td>
+                            <td>{phase.count}</td>
+                            <td>{formatSeconds(phase.averageTimeSeconds)}</td>
+                            <td>{formatSeconds(phase.medianTimeSeconds)}</td>
+                            <td>{phase.averageScore} / 5</td>
+                            <td>{formatDistribution(phase.distribution)}</td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -157,6 +222,8 @@ export default function AdminPage() {
                         <th>Skupina</th>
                         <th>Broj sudionika</th>
                         <th>Prosjek financijske pismenosti</th>
+                        <th>Prosjek bodova zadataka</th>
+                        <th>Prosjek vremena zadataka</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -165,6 +232,32 @@ export default function AdminPage() {
                           <td>{group}</td>
                           <td>{value.count}</td>
                           <td>{value.averageFinancialLiteracy} / 21</td>
+                          <td>{value.averageTaskScore} / 5</td>
+                          <td>{formatSeconds(value.averageTaskTimeSeconds)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div>
+                <h2>Prosjeci skala dodatnih pitanja</h2>
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Pitanje</th>
+                        <th>Broj odgovora</th>
+                        <th>Prosjek</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(summary.scaleAverages).map(([key, value]) => (
+                        <tr key={key}>
+                          <td>{key}</td>
+                          <td>{value.count}</td>
+                          <td>{value.average} / 5</td>
                         </tr>
                       ))}
                     </tbody>
@@ -211,4 +304,17 @@ function formatDistribution(distribution: Record<string, number>) {
   const entries = Object.entries(distribution);
   if (entries.length === 0) return "-";
   return entries.map(([key, value]) => `${key}: ${value}`).join(", ");
+}
+
+function formatSeconds(value: number) {
+  if (!value) return "0s";
+  const minutes = Math.floor(value / 60);
+  const seconds = Math.round(value % 60);
+  return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+}
+
+function formatPhase(phase: string) {
+  if (phase === "before_ai") return "Bez AI-a";
+  if (phase === "after_ai") return "S AI-em";
+  return "Jedan odgovor";
 }

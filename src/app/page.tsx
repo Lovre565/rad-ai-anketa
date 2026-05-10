@@ -105,6 +105,7 @@ export default function HomePage() {
       selectedOption: currentTaskForm.selectedOption,
       explanation: currentTaskForm.explanation.trim(),
       elapsedSeconds,
+      answeredAt: new Date().toISOString(),
       followup: {},
       score: scoreTask(currentTask.id, currentTaskForm.selectedOption, currentTaskForm.explanation)
     };
@@ -128,7 +129,7 @@ export default function HomePage() {
       return;
     }
 
-    const nextAnswers = attachFollowups(tasksAnswers, currentTask.id, currentTaskForm.followup);
+    const nextAnswers = attachFollowups(tasksAnswers, currentTask.id, currentTaskForm.followup, new Date().toISOString());
     setTasksAnswers(nextAnswers);
     setError("");
 
@@ -534,10 +535,11 @@ function getFollowupsForTask(task: (typeof tasks)[number]) {
 function attachFollowups(
   answers: TaskAnswer[],
   taskId: string,
-  followup: Record<string, string | number>
+  followup: Record<string, string | number>,
+  followupAnsweredAt: string
 ) {
   if (taskId !== "task4") {
-    return answers.map((answer) => (answer.taskId === taskId ? { ...answer, followup } : answer));
+    return answers.map((answer) => (answer.taskId === taskId ? { ...answer, followup, followupAnsweredAt } : answer));
   }
 
   const beforeFollowup = { missing_before_ai: followup.missing_before_ai };
@@ -547,8 +549,8 @@ function attachFollowups(
 
   return answers.map((answer) => {
     if (answer.taskId !== "task4") return answer;
-    if (answer.phase === "before_ai") return { ...answer, followup: beforeFollowup };
-    return { ...answer, followup: afterFollowup };
+    if (answer.phase === "before_ai") return { ...answer, followup: beforeFollowup, followupAnsweredAt };
+    return { ...answer, followup: afterFollowup, followupAnsweredAt };
   });
 }
 

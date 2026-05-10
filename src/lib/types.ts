@@ -22,6 +22,8 @@ export type TaskAnswer = {
   selectedOption: string;
   explanation: string;
   elapsedSeconds: number;
+  answeredAt: string;
+  followupAnsweredAt?: string;
   followup: Record<string, string | number>;
   score: number;
 };
@@ -55,4 +57,5 @@ export type AdminTaskAnswer = {
   explanation: string;
   elapsed_seconds: number;
   score: number;
+  created_at: string;
 };

@@ -8,6 +8,7 @@ type LiteracyRow = {
   behavior_answers: Record<string, string>;
   attitude_answers: Record<string, number>;
   score: number;
+  created_at: string;
 };
 
 type FollowupRow = {
@@ -16,6 +17,7 @@ type FollowupRow = {
   phase: string;
   question_id: string;
   answer_value: string;
+  created_at: string;
 };
 
 export async function GET(request: Request) {
@@ -28,15 +30,15 @@ export async function GET(request: Request) {
     { method: "GET" }
   );
   const literacyRows = await supabaseRest<LiteracyRow[]>(
-    "financial_literacy_answers?select=submission_id,knowledge_answers,behavior_answers,attitude_answers,score",
+    "financial_literacy_answers?select=submission_id,knowledge_answers,behavior_answers,attitude_answers,score,created_at",
     { method: "GET" }
   );
   const taskRows = await supabaseRest<AdminTaskAnswer[]>(
-    "task_answers?select=submission_id,task_id,phase,selected_option,explanation,elapsed_seconds,score",
+    "task_answers?select=submission_id,task_id,phase,selected_option,explanation,elapsed_seconds,score,created_at",
     { method: "GET" }
   );
   const followupRows = await supabaseRest<FollowupRow[]>(
-    "post_task_survey_answers?select=submission_id,task_id,phase,question_id,answer_value",
+    "post_task_survey_answers?select=submission_id,task_id,phase,question_id,answer_value,created_at",
     { method: "GET" }
   );
 
@@ -70,9 +72,11 @@ function buildCsv(
     dynamicColumns.add(`${row.task_id}_${row.phase}_time_seconds`);
     dynamicColumns.add(`${row.task_id}_${row.phase}_score`);
     dynamicColumns.add(`${row.task_id}_${row.phase}_explanation`);
+    dynamicColumns.add(`${row.task_id}_${row.phase}_stored_at`);
   }
   for (const row of followupRows) {
     dynamicColumns.add(`${row.task_id}_${row.phase}_${row.question_id}`);
+    dynamicColumns.add(`${row.task_id}_${row.phase}_${row.question_id}_stored_at`);
   }
 
   const columns = [
@@ -82,6 +86,7 @@ function buildCsv(
     "age_group",
     "gender",
     "financial_literacy_score",
+    "financial_literacy_stored_at",
     ...Array.from(dynamicColumns).sort()
   ];
 
@@ -98,6 +103,7 @@ function buildCsv(
 
     const literacy = literacyBySubmission.get(submission.id);
     if (literacy) {
+      values.financial_literacy_stored_at = literacy.created_at;
       Object.entries(literacy.knowledge_answers ?? {}).forEach(([key, value]) => (values[`knowledge_${key}`] = value));
       Object.entries(literacy.behavior_answers ?? {}).forEach(([key, value]) => (values[`behavior_${key}`] = value));
       Object.entries(literacy.attitude_answers ?? {}).forEach(([key, value]) => (values[`attitude_${key}`] = value));
@@ -108,10 +114,12 @@ function buildCsv(
       values[`${task.task_id}_${task.phase}_time_seconds`] = task.elapsed_seconds;
       values[`${task.task_id}_${task.phase}_score`] = task.score;
       values[`${task.task_id}_${task.phase}_explanation`] = task.explanation;
+      values[`${task.task_id}_${task.phase}_stored_at`] = task.created_at;
     }
 
     for (const followup of followupBySubmission.get(submission.id) ?? []) {
       values[`${followup.task_id}_${followup.phase}_${followup.question_id}`] = followup.answer_value;
+      values[`${followup.task_id}_${followup.phase}_${followup.question_id}_stored_at`] = followup.created_at;
     }
 
     lines.push(columns.map((column) => escapeCsv(values[column] ?? "")).join(","));

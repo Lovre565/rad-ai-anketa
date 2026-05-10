@@ -60,6 +60,8 @@ function validateTasks(taskAnswers: TaskAnswer[]) {
     if (!Number.isInteger(answer.elapsedSeconds) || answer.elapsedSeconds < 0 || answer.elapsedSeconds > MAX_ELAPSED_SECONDS) {
       throw new Error("Neispravno vrijeme rješavanja.");
     }
+    validateIsoDate(answer.answeredAt, "Vrijeme odgovora");
+    if (answer.followupAnsweredAt !== undefined) validateIsoDate(answer.followupAnsweredAt, "Vrijeme dodatnih pitanja");
 
     const key = `${answer.taskId}:${answer.phase}`;
     if (seen.has(key)) throw new Error("Duplicirani odgovor zadatka.");
@@ -108,4 +110,10 @@ function validateAge(value: unknown) {
   if (!/^\d{1,3}$/.test(value.trim())) throw new Error("Neispravna dob.");
   const age = Number(value);
   if (!Number.isInteger(age) || age < 16 || age > 100) throw new Error("Neispravna dob.");
+}
+
+function validateIsoDate(value: unknown, label: string) {
+  if (typeof value !== "string") throw new Error(`${label} nije tekst.`);
+  const time = Date.parse(value);
+  if (!Number.isFinite(time)) throw new Error(`${label} nije ispravno.`);
 }
