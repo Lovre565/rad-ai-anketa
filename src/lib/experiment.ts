@@ -229,7 +229,7 @@ export const tasks = [
       { id: "real_estate_tax", text: "Jeste li razmišljali o porezu za kupnju nekretnine?", type: "choice", choices: yesNoPartialChoices },
       { id: "price_growth", text: "Jeste li razmišljali o rastu cijene nekretnine?", type: "choice", choices: yesNoPartialChoices },
       { id: "loan_term_age", text: "Jeste li razmišljali o ograničenju roka otplate kredita s obzirom na dob osobe?", type: "choice", choices: yesNoPartialChoices },
-      { id: "risk_return", text: "Jeste li razmišljali o odnosu prinosa i rizika ulaganja?", type: "choice", choices: yesNoPartialChoices },
+      { id: "monthly_credit_payment", text: "Jeste li razmišljali o mjesečnoj rati kredita?", type: "choice", choices: yesNoPartialChoices },
       { id: "ai_influence", text: "Koliko je AI preporuka utjecala na Vašu odluku?", type: "scale", minLabel: "1 - nimalo", maxLabel: "5 - u potpunosti" },
       { id: "ai_reliability", text: "Koliko smatrate da je AI preporuka bila pouzdana?", type: "scale", minLabel: "1 - potpuno nepouzdana", maxLabel: "5 - potpuno pouzdana" },
       { id: "challenged_ai", text: "Jeste li preispitivali AI preporuku?", type: "choice", choices: yesNoPartialChoices },
