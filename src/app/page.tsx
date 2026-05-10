@@ -42,7 +42,14 @@ export default function HomePage() {
   const currentPhase = currentTask?.phases[phaseIndex] ?? "single";
   const totalSteps = 2 + tasks.reduce((sum, task) => sum + task.phases.length + 1, 0);
   const completedTaskPhases = tasksAnswers.length;
-  const currentStepNumber = step === "intro" ? 1 : step === "literacy" ? 2 : 3 + completedTaskPhases + (step === "followup" ? 1 : 0);
+  const currentStepNumber =
+    step === "done"
+      ? totalSteps
+      : step === "intro"
+        ? 1
+        : step === "literacy"
+          ? 2
+          : 3 + completedTaskPhases + (step === "followup" ? 1 : 0);
   const progress = Math.min(100, Math.round((currentStepNumber / totalSteps) * 100));
   const elapsedSeconds = startedAt ? Math.max(0, Math.round((tick - startedAt) / 1000)) : 0;
 
@@ -193,7 +200,6 @@ export default function HomePage() {
             <span className="eyebrow">Istraživanje</span>
             <h1>Mijenja li umjetna inteligencija način na koji potrošači donose financijske odluke na financijskim tržištima?</h1>
           </div>
-          <a className="button secondary" href="/admin">Admin</a>
         </div>
 
         <div className="panel section">
@@ -443,7 +449,7 @@ function TaskStep({
         <CharacterCounter value={form.explanation} />
       </label>
       <div className="actions">
-        <span className="muted">Timer mjeri samo vrijeme odabira opcije i pisanja obrazloženja.</span>
+        <span />
         <button className="button" disabled={submitting} onClick={onSubmit}>
           <Send size={18} /> Spremi i nastavi
         </button>
@@ -474,7 +480,6 @@ function FollowupStep({
       <div>
         <span className="eyebrow">Dodatna pitanja</span>
         <h2>{task.title}</h2>
-        <p className="muted">Ovaj dio nije uključen u mjerenje vremena rješavanja zadatka.</p>
       </div>
       {followups.map((question) => {
         if (question.type === "scale") {
