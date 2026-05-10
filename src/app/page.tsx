@@ -198,7 +198,7 @@ export default function HomePage() {
         <div className="topbar">
           <div className="brand">
             <span className="eyebrow">Istraživanje</span>
-            <h1>Mijenja li umjetna inteligencija način na koji potrošači donose financijske odluke na financijskim tržištima?</h1>
+            <h1>Eksperiment donošenja financijskih odluka uz različite razine informacijske i AI podrške</h1>
           </div>
         </div>
 

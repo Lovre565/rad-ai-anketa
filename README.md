@@ -1,4 +1,4 @@
-# Mijenja li umjetna inteligencija način na koji potrošači donose financijske odluke na financijskim tržištima?
+# Eksperiment donošenja financijskih odluka uz različite razine informacijske i AI podrške
 
 Next.js aplikacija za anonimno provođenje ankete i eksperimenta iz rada o utjecaju umjetne inteligencije na financijsko odlučivanje.
 
@@ -38,7 +38,7 @@ http://localhost:3000
 4. Napraviti `.env.local` prema `.env.example`:
 
 ```env
-NEXT_PUBLIC_APP_NAME="Mijenja li umjetna inteligencija način na koji potrošači donose financijske odluke na financijskim tržištima?"
+NEXT_PUBLIC_APP_NAME="Eksperiment donošenja financijskih odluka uz različite razine informacijske i AI podrške"
 SUPABASE_URL="https://your-project.supabase.co"
 SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
 ADMIN_PASSWORD="jaka-admin-lozinka"

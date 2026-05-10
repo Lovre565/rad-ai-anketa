@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Mijenja li umjetna inteligencija način na koji potrošači donose financijske odluke na financijskim tržištima?",
+  title: "Eksperiment donošenja financijskih odluka uz različite razine informacijske i AI podrške",
   description: "Web aplikacija za anketu i eksperiment o AI podršci u financijskom odlučivanju."
 };
 
