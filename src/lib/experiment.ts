@@ -215,14 +215,14 @@ export const tasks = [
     title: "Zadatak 4 - prije i nakon AI pomoći",
     instruction: "Prvo odgovorite samostalno. Na sljedećem ekranu možete koristiti AI alat i ponovno odabrati opciju.",
     scenario:
-      "Osoba ima ušteđeno 85.000 EUR koje želi investirati. Cilj joj je kupiti stan u sljedećih pet godina, današnje vrijednosti 300.000 EUR. Očekuje se rast cijena stanova oko 3% godišnje. Osoba ima 45 godina i može mjesečno izdvajati najviše 1200 EUR za dodatnu štednju ili otplatu kredita.",
+      "Osoba ima ušteđeno 85.000 EUR koje želi investirati. Cilj joj je kupiti stan u sljedećih pet godina, današnje vrijednosti 300.000 EUR. Očekuje se rast cijena stanova oko 3% godišnje. Osoba ima 45 godina i može mjesečno izdvajati najviše 1200 EUR za dodatnu štednju ili otplatu kredita. Osoba kupuje rabljeni stan (nije novogradnja) i kupljeni stan neće joj biti prva nekretnina.",
     question: "Ako morate odabrati samo jednu od ponuđenih opcija, koja Vam se čini najprimjerenijom?",
     phases: ["before_ai", "after_ai"] as const,
     options: [
-      { value: "A", label: "Opcija A - kupnja stana odmah uz stambeni kredit, fiksna kamatna stopa 3%, rok otplate najdulje do mirovine." },
-      { value: "B", label: "Opcija B - ulaganje u obveznički fond i kupnja stana nakon 5 godina; prinos 4,3%, zanemariv rizik." },
-      { value: "C", label: "Opcija C - ulaganje u obveznički fond i kupnja stana nakon 2 godine; uvjeti kao u opciji B." },
-      { value: "D", label: "Opcija D - ulaganje u dionički ETF i kupnja nakon 2 godine; očekivani prinos 9%, mogući pad 10-15%." }
+      { value: "A", label: "Opcija A - kupnja stana odmah uz stambeni kredit, fiksna kamatna stopa 3%, rok otplate najdulje do mirovine (65 godina života)." },
+      { value: "B", label: "Opcija B - ulaganje u obveznički fond i kupnja stana nakon 5 godina; očekivani prinos 4,3%, zanemariv rizik. Uvjeti kreditiranja isti su kao pod opcijom A." },
+      { value: "C", label: "Opcija C - ulaganje u obveznički fond i kupnja stana nakon 2 godine; očekivani prinos 4,3%, zanemariv rizik. Uvjeti kreditiranja isti su kao pod opcijom A." },
+      { value: "D", label: "Opcija D - ulaganje u dionički ETF i kupnja stana nakon 2 godine; očekivani prinos 9%, mogući pad vrijednosti 10-15%. Uvjeti kreditiranja isti su kao pod opcijom A." }
     ],
     followups: [
       { id: "missing_before_ai", text: "Jeste li prije korištenja AI-a smatrali da Vam nedostaju važne informacije za donošenje odluke?", type: "choice", choices: yesNoPartialChoices },
