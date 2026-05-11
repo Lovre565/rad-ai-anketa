@@ -1,16 +1,10 @@
 import { NextResponse } from "next/server";
 import { scoreFinancialLiteracy, scoreTask } from "@/lib/scoring";
 import { supabaseRest } from "@/lib/supabase";
-import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import type { SubmissionPayload } from "@/lib/types";
 import { validateSubmissionPayload } from "@/lib/validation";
 
 export async function POST(request: Request) {
-  const ip = getClientIp(request);
-  if (!checkRateLimit(`submit:${ip}`, 12, 60 * 60 * 1000)) {
-    return NextResponse.json({ error: "Previše pokušaja. Pokušajte kasnije." }, { status: 429 });
-  }
-
   let submissionId: string | null = null;
 
   try {
