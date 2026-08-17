@@ -107,6 +107,7 @@ function buildCsv(
 
     for (const task of taskBySubmission.get(submission.id) ?? []) {
       values[`${task.task_id}_${task.phase}_option`] = task.selected_option;
+      values[`${task.task_id}_${task.phase}_answered_at`] = task.created_at;
       values[`${task.task_id}_${task.phase}_time_seconds`] = task.elapsed_seconds;
       values[`${task.task_id}_${task.phase}_score`] = task.score;
       values[`${task.task_id}_${task.phase}_explanation`] = task.explanation;

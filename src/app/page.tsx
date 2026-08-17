@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Clock, Send } from "lucide-react";
 import {
   financialAttitudes,
@@ -32,6 +32,7 @@ export default function HomePage() {
   const [consent, setConsent] = useState(false);
   const [literacy, setLiteracy] = useState<FinancialLiteracyAnswer>(blankLiteracy);
   const [tasksAnswers, setTasksAnswers] = useState<TaskAnswer[]>([]);
+  const tasksAnswersRef = useRef<TaskAnswer[]>([]);
   const [currentTaskForm, setCurrentTaskForm] = useState({
     selectedOption: "",
     explanation: "",
@@ -110,8 +111,8 @@ export default function HomePage() {
       score: scoreTask(currentTask.id, currentTaskForm.selectedOption, currentTaskForm.explanation)
     };
 
-    const nextAnswers = [...tasksAnswers, answer];
-    setTasksAnswers(nextAnswers);
+    const nextAnswers = [...tasksAnswersRef.current, answer];
+    storeTaskAnswers(nextAnswers);
     setError("");
 
     if (phaseIndex + 1 < currentTask.phases.length) {
@@ -129,8 +130,8 @@ export default function HomePage() {
       return;
     }
 
-    const nextAnswers = attachFollowups(tasksAnswers, currentTask.id, currentTaskForm.followup);
-    setTasksAnswers(nextAnswers);
+    const nextAnswers = attachFollowups(tasksAnswersRef.current, currentTask.id, currentTaskForm.followup);
+    storeTaskAnswers(nextAnswers);
     setError("");
 
     if (taskIndex + 1 < tasks.length) {
@@ -162,6 +163,11 @@ export default function HomePage() {
   }
 
   async function submitAll(finalTaskAnswers: TaskAnswer[]) {
+    if (!hasCompleteTaskData(finalTaskAnswers)) {
+      setError("Nedostaju dodatni odgovori. Vratite se korak natrag i pokušajte ponovno.");
+      return;
+    }
+
     setSubmitting(true);
     setError("");
 
@@ -191,6 +197,11 @@ export default function HomePage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function storeTaskAnswers(nextAnswers: TaskAnswer[]) {
+    tasksAnswersRef.current = nextAnswers;
+    setTasksAnswers(nextAnswers);
   }
 
   return (
@@ -550,6 +561,29 @@ function attachFollowups(
     if (answer.taskId !== "task4") return answer;
     if (answer.phase === "before_ai") return { ...answer, followup: beforeFollowup };
     return { ...answer, followup: afterFollowup };
+  });
+}
+
+function hasCompleteTaskData(answers: TaskAnswer[]) {
+  const expectedAnswers = tasks.reduce((sum, task) => sum + task.phases.length, 0);
+  if (answers.length !== expectedAnswers) return false;
+
+  return answers.every((answer) => {
+    const task = tasks.find((candidate) => candidate.id === answer.taskId);
+    if (!task || !answer.answeredAt) return false;
+
+    const requiredFollowups =
+      task.id === "task4" && answer.phase === "before_ai"
+        ? task.followups.filter((question) => question.id === "missing_before_ai")
+        : task.id === "task4"
+          ? task.followups.filter((question) => question.id !== "missing_before_ai")
+          : task.followups;
+
+    return requiredFollowups.every((question) => {
+      const value = answer.followup?.[question.id];
+      if (question.type === "text") return isValidTextLength(String(value ?? ""));
+      return value !== undefined && value !== "";
+    });
   });
 }
 
