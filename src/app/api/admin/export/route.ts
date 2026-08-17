@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { getAdminSessionCookieName, isAdminSessionValid, supabaseRest } from "@/lib/supabase";
+import { getAdminSessionCookieName, isAdminSessionValid, supabaseRestAll } from "@/lib/supabase";
 import type { AdminSubmission, AdminTaskAnswer } from "@/lib/types";
 
 type LiteracyRow = {
@@ -23,21 +23,17 @@ export async function GET(request: Request) {
     return new Response("Neispravna admin lozinka.", { status: 401 });
   }
 
-  const submissions = await supabaseRest<AdminSubmission[]>(
-    "submissions?select=id,created_at,study_group,age_group,gender,financial_literacy_score&order=created_at.asc",
-    { method: "GET" }
+  const submissions = await supabaseRestAll<AdminSubmission>(
+    "submissions?select=id,created_at,study_group,age_group,gender,financial_literacy_score&order=created_at.asc,id.asc"
   );
-  const literacyRows = await supabaseRest<LiteracyRow[]>(
-    "financial_literacy_answers?select=submission_id,knowledge_answers,behavior_answers,attitude_answers,score",
-    { method: "GET" }
+  const literacyRows = await supabaseRestAll<LiteracyRow>(
+    "financial_literacy_answers?select=submission_id,knowledge_answers,behavior_answers,attitude_answers,score&order=id.asc"
   );
-  const taskRows = await supabaseRest<AdminTaskAnswer[]>(
-    "task_answers?select=submission_id,task_id,phase,selected_option,explanation,elapsed_seconds,score,created_at",
-    { method: "GET" }
+  const taskRows = await supabaseRestAll<AdminTaskAnswer>(
+    "task_answers?select=submission_id,task_id,phase,selected_option,explanation,elapsed_seconds,score,created_at&order=id.asc"
   );
-  const followupRows = await supabaseRest<FollowupRow[]>(
-    "post_task_survey_answers?select=submission_id,task_id,phase,question_id,answer_value",
-    { method: "GET" }
+  const followupRows = await supabaseRestAll<FollowupRow>(
+    "post_task_survey_answers?select=submission_id,task_id,phase,question_id,answer_value&order=id.asc"
   );
 
   const csv = buildCsv(submissions, literacyRows, taskRows, followupRows);

@@ -39,6 +39,24 @@ export async function supabaseRest<T>(
   return (await response.json()) as T;
 }
 
+export async function supabaseRestAll<T>(path: string): Promise<T[]> {
+  const pageSize = 1000;
+  const rows: T[] = [];
+
+  for (let offset = 0; ; offset += pageSize) {
+    const page = await supabaseRest<T[]>(path, {
+      method: "GET",
+      headers: {
+        Range: `${offset}-${offset + pageSize - 1}`,
+        "Range-Unit": "items"
+      }
+    });
+
+    rows.push(...page);
+    if (page.length < pageSize) return rows;
+  }
+}
+
 function normalizeSupabaseUrl(url: string): string {
   return url
     .trim()

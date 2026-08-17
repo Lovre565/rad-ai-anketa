@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { getAdminSessionCookieName, isAdminSessionValid, supabaseRest } from "@/lib/supabase";
+import { getAdminSessionCookieName, isAdminSessionValid, supabaseRestAll } from "@/lib/supabase";
 import type { AdminSubmission, AdminTaskAnswer } from "@/lib/types";
 
 type FollowupRow = {
@@ -17,17 +17,14 @@ export async function GET(request: Request) {
   }
 
   try {
-    const submissions = await supabaseRest<AdminSubmission[]>(
-      "submissions?select=id,created_at,study_group,age_group,gender,financial_literacy_score&order=created_at.desc",
-      { method: "GET" }
+    const submissions = await supabaseRestAll<AdminSubmission>(
+      "submissions?select=id,created_at,study_group,age_group,gender,financial_literacy_score&order=created_at.desc,id.desc"
     );
-    const taskAnswers = await supabaseRest<AdminTaskAnswer[]>(
-      "task_answers?select=submission_id,task_id,phase,selected_option,explanation,elapsed_seconds,score,created_at",
-      { method: "GET" }
+    const taskAnswers = await supabaseRestAll<AdminTaskAnswer>(
+      "task_answers?select=submission_id,task_id,phase,selected_option,explanation,elapsed_seconds,score,created_at&order=id.asc"
     );
-    const followupAnswers = await supabaseRest<FollowupRow[]>(
-      "post_task_survey_answers?select=submission_id,task_id,phase,question_id,answer_value",
-      { method: "GET" }
+    const followupAnswers = await supabaseRestAll<FollowupRow>(
+      "post_task_survey_answers?select=submission_id,task_id,phase,question_id,answer_value&order=id.asc"
     );
 
     return NextResponse.json(buildSummary(submissions, taskAnswers, followupAnswers));
