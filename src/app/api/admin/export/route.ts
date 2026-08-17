@@ -84,7 +84,11 @@ function buildCsv(
     "age_group",
     "gender",
     "financial_literacy_score",
-    ...Array.from(dynamicColumns).sort()
+    "app_version",
+    "data_status",
+    "followup_missing_count",
+    ...getPrimaryTaskColumns(),
+    ...Array.from(dynamicColumns).sort().filter((column) => !getPrimaryTaskColumns().includes(column))
   ];
 
   const lines = [columns.join(",")];
@@ -95,7 +99,8 @@ function buildCsv(
       study_group: submission.study_group,
       age_group: submission.age_group,
       gender: submission.gender,
-      financial_literacy_score: submission.financial_literacy_score
+      financial_literacy_score: submission.financial_literacy_score,
+      app_version: getAppVersion()
     };
 
     const literacy = literacyBySubmission.get(submission.id);
@@ -122,6 +127,13 @@ function buildCsv(
       values[`${followup.task_id}_${followup.phase}_${followup.question_id}`] = followup.answer_value;
     }
 
+    const missingFollowups = countMissingFollowups(values);
+    values.followup_missing_count = missingFollowups;
+    values.data_status =
+      missingFollowups === 0
+        ? "OK"
+        : "Fale dodatna pitanja koja nisu zapisana u bazu; glavni odgovori su spremljeni.";
+
     lines.push(columns.map((column) => escapeCsv(values[column] ?? "")).join(","));
   }
 
@@ -142,6 +154,83 @@ function escapeCsv(value: string | number) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
+function getPrimaryTaskColumns() {
+  return [
+    "task1_single_option",
+    "task1_single_time_seconds",
+    "task1_single_answered_at",
+    "task1_single_score",
+    "task1_single_explanation",
+    "task2_single_option",
+    "task2_single_time_seconds",
+    "task2_single_answered_at",
+    "task2_single_score",
+    "task2_single_explanation",
+    "task3_single_option",
+    "task3_single_time_seconds",
+    "task3_single_answered_at",
+    "task3_single_score",
+    "task3_single_explanation",
+    "task4_before_ai_option",
+    "task4_before_ai_time_seconds",
+    "task4_before_ai_answered_at",
+    "task4_before_ai_score",
+    "task4_before_ai_explanation",
+    "task4_after_ai_option",
+    "task4_after_ai_time_seconds",
+    "task4_after_ai_answered_at",
+    "task4_after_ai_score",
+    "task4_after_ai_explanation"
+  ];
+}
+
+function countMissingFollowups(values: Record<string, string | number>) {
+  return getRequiredFollowupColumns().filter((column) => values[column] === undefined || values[column] === "").length;
+}
+
+function getRequiredFollowupColumns() {
+  return [
+    "task1_single_confidence",
+    "task1_single_difficulty",
+    "task1_single_extra_sources",
+    "task1_single_inflation",
+    "task1_single_liquidity",
+    "task1_single_risk",
+    "task2_single_ai_reliance",
+    "task2_single_availability",
+    "task2_single_confidence",
+    "task2_single_difficulty",
+    "task2_single_info_influence",
+    "task2_single_loss_risk",
+    "task2_single_tax",
+    "task2_single_used_internet",
+    "task2_single_would_use_ai",
+    "task3_single_ai_influence",
+    "task3_single_ai_reliability",
+    "task3_single_challenged_ai",
+    "task3_single_confidence",
+    "task3_single_difficulty",
+    "task3_single_horizon",
+    "task3_single_missing_info",
+    "task3_single_payout_rules",
+    "task3_single_risk_return",
+    "task3_single_tax_incentives",
+    "task3_single_used_ai",
+    "task4_before_ai_missing_before_ai",
+    "task4_after_ai_ai_influence",
+    "task4_after_ai_ai_reliability",
+    "task4_after_ai_challenged_ai",
+    "task4_after_ai_confidence_with_ai",
+    "task4_after_ai_confidence_without_ai",
+    "task4_after_ai_difficulty_with_ai",
+    "task4_after_ai_difficulty_without_ai",
+    "task4_after_ai_loan_term_age",
+    "task4_after_ai_monthly_credit_payment",
+    "task4_after_ai_price_growth",
+    "task4_after_ai_real_estate_tax"
+  ];
+}
+
 async function requireAdminSession() {
   const cookieStore = await cookies();
   return isAdminSessionValid(cookieStore.get(getAdminSessionCookieName())?.value);
@@ -149,4 +238,8 @@ async function requireAdminSession() {
 
 function sanitizeSpreadsheetFormula(value: string) {
   return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+}
+
+function getAppVersion() {
+  return process.env.VERCEL_GIT_COMMIT_SHA ?? "local";
 }

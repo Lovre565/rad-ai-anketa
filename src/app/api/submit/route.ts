@@ -75,13 +75,19 @@ export async function POST(request: Request) {
     );
 
     if (followupRows.length > 0) {
-      await supabaseRest("post_task_survey_answers", {
+      const insertedFollowups = await supabaseRest<Array<{ id: string }>>("post_task_survey_answers", {
         method: "POST",
         body: JSON.stringify(followupRows)
       });
+
+      if (insertedFollowups.length !== followupRows.length) {
+        throw new Error("Nisu spremljeni svi dodatni odgovori.");
+      }
+    } else {
+      throw new Error("Nedostaju dodatni odgovori.");
     }
 
-    return NextResponse.json({ ok: true, id: submissionId });
+    return NextResponse.json({ ok: true, id: submissionId, version: getAppVersion() });
   } catch (error) {
     console.error("Submit failed", error);
     if (submissionId) {
@@ -100,4 +106,8 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
+}
+
+function getAppVersion() {
+  return process.env.VERCEL_GIT_COMMIT_SHA ?? "local";
 }
